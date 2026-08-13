@@ -320,8 +320,41 @@ body[data-panel="1"] .rail button.is-on,
 body[data-panel="3"] .rail button.is-on,
 body[data-panel="4"] .rail button.is-on{background:#8A5A14;border-color:#8A5A14}
 
-/* Without JS there is nothing to page between. */
-html:not(.js) .rail{display:none}
+/* ---------- the scroll mark ----------
+   A mark, not a button — it says the site keeps going and nothing more, so
+   it takes no clicks and reserves no space. It steps aside on the last
+   chapter, where there is nothing left to scroll to. */
+.scroll-mark{
+  position:fixed;z-index:40;left:50%;
+  bottom:calc(8px + env(safe-area-inset-bottom,0px));
+  transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  pointer-events:none;color:var(--nav-ink);
+  transition:opacity .4s var(--ease);
+}
+.scroll-mark span{
+  font-family:"EB Garamond",serif;font-variant:small-caps;
+  font-size:11px;letter-spacing:.3em;text-indent:.3em;line-height:1;opacity:.72;
+}
+.scroll-mark i{
+  display:block;width:1px;height:14px;background:currentColor;opacity:.42;
+  transform-origin:top;animation:scroll-run 2.3s var(--ease) infinite;
+}
+@keyframes scroll-run{
+  0%      {transform:scaleY(0);opacity:0}
+  38%     {transform:scaleY(1);opacity:.5}
+  70%,100%{transform:scaleY(1);opacity:0;transform-origin:bottom}
+}
+.scroll-mark.is-off{opacity:0}
+@media (max-width:767px){
+  .scroll-mark{bottom:calc(6px + env(safe-area-inset-bottom,0px));gap:3px}
+  .scroll-mark span{font-size:10.5px}
+  .scroll-mark i{height:12px}
+}
+@media (prefers-reduced-motion:reduce){ .scroll-mark i{animation:none;opacity:.42} }
+
+/* Without JS there is nothing to page between, and no chapter to point past. */
+html:not(.js) .rail,html:not(.js) .scroll-mark{display:none}
 
 /* ---------- responsive layout: phone ---------- */
 @media (max-width:767px){
@@ -434,7 +467,7 @@ html:not(.js) .rail{display:none}
    that fits is a chapter that pages on one gesture instead of quietly
    scrolling inside itself. */
 @media (min-width:768px) and (max-height:880px){
-  :root{--pad-block:clamp(40px,5.4vh,70px)}
+  :root{--pad-block:clamp(46px,5.4vh,70px)}
   .mark{top:clamp(16px,2.4vh,26px)}
   h2{font-size:clamp(24px,min(calc(12px + 1.8vw),5.4vh),46px);margin-bottom:clamp(16px,2.4vh,30px)}
   p{font-size:clamp(14px,min(calc(9px + .5vw),2.1vh),18px);line-height:1.78}
@@ -451,7 +484,7 @@ html:not(.js) .rail{display:none}
 }
 
 @media (min-width:768px) and (max-height:720px){
-  :root{--pad-block:32px}
+  :root{--pad-block:46px}
   .mark{top:14px}
   h2{margin-bottom:14px}
   p{line-height:1.7}
@@ -634,6 +667,11 @@ html:not(.js) .panel{min-height:100vh;min-height:100svh}
 
 <nav class="rail" id="rail" aria-label="섹션 이동"></nav>
 
+<div class="scroll-mark" id="scrollMark" aria-hidden="true">
+  <span>Scroll</span>
+  <i></i>
+</div>
+
 <script>
 (function () {
   var html = document.documentElement;
@@ -644,6 +682,7 @@ html:not(.js) .panel{min-height:100vh;min-height:100svh}
   var last   = panels.length - 1;
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   var rail   = document.getElementById('rail');
+  var mark   = document.getElementById('scrollMark');
 
   var index  = 0;
   var locked = false;
@@ -668,6 +707,7 @@ html:not(.js) .panel{min-height:100vh;min-height:100svh}
       if (i === index) dot.setAttribute('aria-current', 'true');
       else dot.removeAttribute('aria-current');
     });
+    mark.classList.toggle('is-off', index === last);
   }
 
   /* move ------------------------------------------------------------ */
@@ -681,7 +721,10 @@ html:not(.js) .panel{min-height:100vh;min-height:100svh}
     edgeAt = 0;
     paint();
     if (!reduce) { locked = true; setTimeout(function () { locked = false; }, 900); }
-    if (history.replaceState) history.replaceState(null, '', '#' + panels[index].id);
+    /* The address bar is deliberately left alone. It used to pick up the
+       chapter's name as you went, so a link copied from the foot of the site
+       carried "#join" with it and opened on the last chapter for whoever
+       received it. Everyone starts at the poster now. */
   }
 
   /* The pages are lazy so they never hold up the poster, but a chapter is only
@@ -789,16 +832,15 @@ html:not(.js) .panel{min-height:100vh;min-height:100svh}
     }, 160);
   });
 
-  /* open on the chapter named in the URL -------------------------------- */
-  var start = panels.map(function (p) { return '#' + p.id; }).indexOf(location.hash);
-  paint();
-  if (start > 0) {
-    var keep = deck.style.transition;
-    deck.style.transition = 'none';
-    go(start);
-    deck.offsetHeight;
-    deck.style.transition = keep;
+  /* everyone opens on the poster ----------------------------------------
+     Links already shared carrying a "#join" on the end have to land on the
+     first chapter too, so the fragment is dropped rather than followed. */
+  if (location.hash && history.replaceState) {
+    history.replaceState(null, '', location.pathname + location.search);
   }
+  panels.forEach(function (panel) { panel.scrollTop = 0; });
+  scrollTo(0, 0);
+  paint();
 })();
 </script>
 </body>
