@@ -5,9 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RE:BIBLE Season 3 — Anointing | 사무엘상 통독</title>
 <meta name="description" content="순종하는 인생 가운데 기름부으시는 하나님의 섭리. RE:BIBLE 시즌 3, 사무엘상 31장을 4주간 함께 통독합니다.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="RE:BIBLE Season 3">
+<meta property="og:url" content="https://dkssudghdh1234.github.io/rebible/">
 <meta property="og:title" content="RE:BIBLE Season 3 — Anointing">
 <meta property="og:description" content="순종하는 인생 가운데 기름부으시는 하나님의 섭리 · 사무엘상 4주 통독">
-<meta property="og:image" content="assets/cover-desktop-4k.png">
+<meta property="og:image" content="https://dkssudghdh1234.github.io/rebible/assets/og-cover.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="675">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#8B7CD6">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%238B7CD6'/%3E%3Cpath d='M16 5c4.5 6 7 9.6 7 13a7 7 0 1 1-14 0c0-3.4 2.5-7 7-13z' fill='%23F0C68B'/%3E%3C/svg%3E">
 
@@ -20,10 +26,15 @@
 /* ============================================================
    RE:BIBLE Season 3 — Anointing
    ------------------------------------------------------------
-   Seven full-screen chapters. Wheel, swipe, or the arrow
-   keys move exactly one chapter at a time. A chapter that is
-   taller than the screen scrolls on its own first, and only
-   hands over once it reaches its edge.
+   Seven full-screen chapters. The rail at the side, a wheel, a
+   swipe or the arrow keys each move exactly one chapter at a time.
+
+   Every chapter is sized to fit the screen outright — phone,
+   tablet, laptop and desktop each get their own tier — because
+   a chapter that fits is a chapter that pages on one gesture.
+   Only where a phone cannot hold the text does a chapter scroll
+   on its own, and then it hands over at its edge rather than
+   drifting into the next one.
 
    The poster on chapter 1 is the original artwork, untouched.
    The only motion on the page is the chapter change itself.
@@ -40,6 +51,15 @@
   --paper:       #F4F2FA;
   --ease:        cubic-bezier(.76,0,.16,1);
   --screen-height:100vh;
+
+  /* The chapter's own frame, named so the documents can be measured against
+     it. Each tier below re-states these three and everything follows. */
+  --pad-block:   clamp(48px,6.4vh,88px);
+  --pad-inline:  clamp(22px,5vw,64px);
+  --safe-bottom: env(safe-area-inset-bottom,0px);
+  /* exactly the height a document page has to fill — no vh guesswork, so the
+     page grows to the screen instead of being capped short of it */
+  --doc-h:       calc(var(--screen-height) - 2*var(--pad-block) - var(--safe-bottom));
 }
 
 @supports (height:100dvh){
@@ -66,8 +86,12 @@ img{display:block;max-width:100%}
 }
 .js .panel{
   height:var(--screen-height);overflow-y:auto;overscroll-behavior:contain;
+  scrollbar-width:none;-ms-overflow-style:none;
 }
-.js .panel:not(.panel--cover){scrollbar-gutter:stable}
+/* The chapter rail is the position indicator, so no scrollbar is drawn — and
+   with none drawn there is no gutter to reserve, which keeps every chapter
+   optically centred on the same axis as the poster. */
+.js .panel::-webkit-scrollbar{width:0;height:0;display:none}
 @media (prefers-reduced-motion:reduce){ .js .deck{transition:none} }
 
 .panel{
@@ -79,6 +103,13 @@ img{display:block;max-width:100%}
    of the poster instead of a bar. */
 .panel--cover{padding:0;background:linear-gradient(180deg,
    #8B7CD6 0%, #8B7CD6 46%, #4A4780 52%, var(--navy) 58%, var(--navy) 100%)}
+/* Wider than the artwork itself, the leftover margin runs down the side of the
+   poster rather than above and below it, so it has to follow the poster's own
+   top-to-bottom colour instead. These stops are sampled from its edge pixels. */
+@media (min-aspect-ratio:16/9){
+  .panel--cover{background:linear-gradient(180deg,
+     #8B7CD6 0%, #8B7CD6 82%, #8578C8 85%, #6D65A0 90%, #4A4A73 95%, #1C253F 100%)}
+}
 .panel--light{background:var(--paper);color:var(--ink)}
 .panel--purple{background:linear-gradient(180deg,var(--navy) 0%,#4B3F91 46%,var(--purple) 100%)}
 .panel--journal{background:linear-gradient(145deg,#F4F2FA 0%,#E9E4F7 100%);color:var(--ink)}
@@ -93,13 +124,18 @@ img{display:block;max-width:100%}
 
 .inner{
   width:100%;max-width:1360px;margin:auto;
-  padding:clamp(70px,9vh,112px) clamp(22px,5vw,64px);
+  padding:var(--pad-block) var(--pad-inline)
+          calc(var(--pad-block) + var(--safe-bottom));
 }
 
-/* ---------- chapter 1 : the poster, never cropped ---------- */
-.panel--cover .inner{padding:0;max-width:none;height:100%}
-.cover-frame{position:relative;height:100%;display:grid;place-items:center;overflow:hidden}
-.cover-frame picture{display:block;width:100%;height:100%}
+/* ---------- chapter 1 : the poster, never cropped ----------
+   The frame is the panel, and the artwork is pinned to the frame's own box
+   rather than inheriting a percentage height down a picture/img chain — a
+   chain that silently fails to resolve inside a centred grid item, which is
+   what used to push the poster past the foot of a laptop screen. */
+.panel--cover .inner{padding:0;margin:0;max-width:none;flex:1 1 auto;min-height:0}
+.cover-frame{position:relative;width:100%;height:100%;overflow:hidden}
+.cover-frame picture{position:absolute;inset:0;display:block}
 .cover-frame img{
   width:100%;height:100%;object-fit:contain;object-position:center;
   user-select:none;-webkit-user-drag:none;
@@ -171,12 +207,16 @@ p + p{margin-top:1.1em}
   display:grid;grid-template-columns:minmax(0,1.18fr) minmax(280px,.82fr);
   gap:clamp(28px,5vw,76px);align-items:center;
 }
+/* A document page takes the whole height its chapter has to give, and the
+   width follows from that. Where the column is the tighter of the two, width
+   wins instead and the height comes down with it — either way the box hugs
+   the page, so the white card and its shadow never outrun the artwork. */
 .document-shot{
-  width:100%;height:auto;background:#fff;border-radius:18px;
+  width:auto;height:auto;max-width:100%;max-height:var(--doc-h);
+  background:#fff;border-radius:18px;
   box-shadow:0 24px 70px rgba(27,25,62,.18);border:1px solid rgba(36,31,58,.1);
 }
-.journal-visual{display:flex;justify-content:center}
-.journal-visual .document-shot{width:auto;max-width:100%;max-height:72vh;object-fit:contain}
+.journal-visual{display:flex;justify-content:center;min-width:0}
 .journal-copy .eyebrow{
   color:var(--purple-strong);font-size:clamp(22px,2.2vw,34px);
   letter-spacing:.12em;text-indent:0;text-align:left;
@@ -186,7 +226,9 @@ p + p{margin-top:1.1em}
 .journal-copy p{color:#47405F}
 
 /* ---------- guide & reflection pages ---------- */
-.panel--guide .inner{max-width:1500px}
+/* Two pages abreast need a wider measure than a column of text does, or a
+   large display leaves them stranded at half the height it could give them. */
+.panel--guide .inner{max-width:1760px}
 .panel--guide{color:#23364C}
 .panel--guide h2{color:var(--ink)}
 .panel--guide h2 .guide-accent{color:#4E62B7}
@@ -252,6 +294,35 @@ p + p{margin-top:1.1em}
 .apply-button::after{content:"↗";font-size:19px}
 .apply-button:hover{transform:translateY(-3px);background:#FFD7A3;box-shadow:0 22px 54px rgba(0,0,0,.34)}
 
+/* ============================================================
+   chapter navigation — the rail
+   It sits above the deck and reads its colour from the chapter
+   underneath, so it stays legible on light and dark.
+   ============================================================ */
+body{--nav-ink:#FFFFFF;--nav-line:rgba(255,255,255,.5)}
+body[data-panel="1"],body[data-panel="3"],body[data-panel="4"]{
+  --nav-ink:#241F3A;--nav-line:rgba(36,31,58,.34);
+}
+
+.rail{
+  position:fixed;z-index:40;right:clamp(14px,1.7vw,26px);top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:13px;
+}
+.rail button{
+  width:9px;height:9px;padding:0;border-radius:50%;cursor:pointer;
+  border:1px solid var(--nav-line);background:transparent;
+  transition:background-color .25s ease,border-color .25s ease,transform .25s var(--ease);
+}
+.rail button:hover{transform:scale(1.35);border-color:var(--nav-ink)}
+.rail button:focus-visible{outline:2px solid rgba(240,198,139,.8);outline-offset:3px}
+.rail button.is-on{background:var(--gold-warm);border-color:var(--gold-warm);transform:scale(1.25)}
+body[data-panel="1"] .rail button.is-on,
+body[data-panel="3"] .rail button.is-on,
+body[data-panel="4"] .rail button.is-on{background:#8A5A14;border-color:#8A5A14}
+
+/* Without JS there is nothing to page between. */
+html:not(.js) .rail{display:none}
+
 /* ---------- responsive layout: phone ---------- */
 @media (max-width:767px){
   .cover-apply{
@@ -259,10 +330,10 @@ p + p{margin-top:1.1em}
     min-width:104px;padding:9px 15px;font-size:12.5px;
     background:rgba(45,34,103,.2);
   }
-  .panel:not(.panel--cover) .inner{
-    padding:clamp(66px,10svh,86px) clamp(18px,5.5vw,28px)
-            calc(clamp(66px,10svh,86px) + env(safe-area-inset-bottom));
-  }
+  :root{--pad-block:clamp(52px,7svh,74px);--pad-inline:clamp(18px,5.5vw,28px)}
+  /* A phone has no room for the rail beside the text — the button carries
+     the whole job there. */
+  .rail{display:none}
   .mark{
     top:calc(17px + env(safe-area-inset-top));
     left:clamp(18px,5.5vw,28px);
@@ -297,34 +368,59 @@ p + p{margin-top:1.1em}
   .step{padding:16px 18px}
   .step p{line-height:1.66}
   .qr{width:min(220px,58vw,28svh)}
-  .showcase-grid{grid-template-columns:1fr;gap:26px}
+  .showcase-grid{grid-template-columns:1fr;gap:22px}
   .journal-copy{order:-1}
-  .journal-visual .document-shot{width:100%;max-height:none}
   .guide-layout{grid-template-columns:1fr}
   .guide-copy{margin-bottom:4px}
-  .guide-page .document-shot{width:100%}
+  /* A phone has no width to spare, so the pages step out past the text
+     margin and take the screen nearly edge to edge. */
+  .journal-visual,.guide-page{margin-inline:calc(10px - var(--pad-inline))}
+  .journal-visual .document-shot,.guide-page .document-shot{
+    width:100%;max-height:none;border-radius:14px;
+  }
+}
+
+/* ---------- responsive layout: small or short phones ---------- */
+@media (max-width:767px) and (max-height:720px){
+  :root{--pad-block:44px}
+  .meeting-name{font-size:clamp(31px,9.4vw,42px);margin-bottom:14px}
+  .meeting-photo{width:min(300px,78%)}
+  .meeting-lead{font-size:clamp(17px,5vw,21px);margin-bottom:14px}
+  .footmark{font-size:26px}
+  .apply-button{padding:14px 24px}
 }
 
 /* ---------- responsive layout: tablet ---------- */
 @media (min-width:768px){
-  .inner{padding-inline:clamp(38px,6vw,72px)}
+  :root{--pad-inline:clamp(38px,6vw,72px)}
+  /* Two document pages abreast are what the width has to carry here, so the
+     guide chapter keeps a tighter margin than the text chapters. */
+  .panel--guide{--pad-inline:clamp(20px,3vw,44px)}
   .cols{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+  /* The page is the thing being shown, so it takes the larger share and the
+     gap closes up — on a tablet its width, not its height, is what runs out. */
+  .showcase-grid{grid-template-columns:minmax(0,1.24fr) minmax(260px,.76fr);gap:clamp(18px,2.8vw,56px)}
   .steps{grid-template-columns:repeat(2,minmax(0,1fr))}
   .step:last-child{grid-column:1/-1}
-  .guide-layout{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .guide-layout{grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(14px,2vw,30px)}
   .guide-copy{grid-column:1/-1;max-width:720px}
 }
 
 /* ---------- responsive layout: desktop ---------- */
 @media (min-width:1100px){
-  .inner{padding-inline:clamp(52px,5vw,84px)}
+  :root{--pad-inline:clamp(52px,5vw,84px)}
+  .panel--guide{--pad-inline:clamp(28px,3.2vw,56px)}
   .steps{grid-template-columns:repeat(3,minmax(0,1fr))}
   .step:last-child{grid-column:auto}
-  .guide-layout{grid-template-columns:minmax(0,1fr) minmax(250px,.62fr) minmax(0,1fr)}
+}
+
+/* Three abreast is also the shape that fits a short screen best, so a wide
+   laptop takes it even a little below the desktop breakpoint. */
+@media (min-width:1100px),(min-width:900px) and (max-height:800px){
+  .guide-layout{grid-template-columns:minmax(0,1fr) minmax(220px,.54fr) minmax(0,1fr)}
   .guide-copy{grid-column:2;grid-row:1}
   .guide-page--guide{grid-column:1;grid-row:1}
   .guide-page--reflection{grid-column:3;grid-row:1}
-  .guide-page .document-shot{width:auto;max-width:100%;max-height:70vh;object-fit:contain}
 }
 
 /* Wide and 4K displays keep a comfortable reading measure. */
@@ -332,13 +428,45 @@ p + p{margin-top:1.1em}
   .inner{max-width:1520px}
 }
 
-/* Short landscape screens can still reach every item by scrolling. */
-@media (max-height:700px) and (min-width:768px){
-  .inner{padding-block:58px 72px}
-  .mark{top:18px}
-  h2{margin-bottom:20px}
-  .facts{margin-bottom:20px}
-  .qr{width:min(190px,28vh)}
+/* ---------- short screens: laptops ----------
+   A laptop is wide but shallow, so the limit is height, not width. Each
+   chapter is stepped down here until it fits the screen outright — a chapter
+   that fits is a chapter that pages on one gesture instead of quietly
+   scrolling inside itself. */
+@media (min-width:768px) and (max-height:880px){
+  :root{--pad-block:clamp(40px,5.4vh,70px)}
+  .mark{top:clamp(16px,2.4vh,26px)}
+  h2{font-size:clamp(24px,min(calc(12px + 1.8vw),5.4vh),46px);margin-bottom:clamp(16px,2.4vh,30px)}
+  p{font-size:clamp(14px,min(calc(9px + .5vw),2.1vh),18px);line-height:1.78}
+  .facts{margin-bottom:clamp(14px,2.2vh,26px)}
+  .step{padding:clamp(14px,2vh,22px) 20px}
+  .step p{line-height:1.7}
+  .meeting-name{font-size:clamp(38px,min(5.6vw,9vh),72px);margin-bottom:16px}
+  .meeting-photo{max-height:26vh}
+  .meeting-lead{font-size:clamp(18px,min(2vw,3.4vh),27px);margin-bottom:16px}
+  .guide-copy h2{font-size:clamp(26px,min(calc(15px + 1.7vw),5.6vh),46px);margin-bottom:14px}
+  .qr{width:min(200px,32vh)}
+  .apply-button{margin-top:clamp(18px,3vh,32px);padding:15px 26px}
+  .sign{margin-top:clamp(18px,3vh,34px);padding-top:16px}
+}
+
+@media (min-width:768px) and (max-height:720px){
+  :root{--pad-block:32px}
+  .mark{top:14px}
+  h2{margin-bottom:14px}
+  p{line-height:1.7}
+  p + p{margin-top:.85em}
+  .facts li{padding:8px 15px}
+  .step{padding:12px 17px;border-radius:16px}
+  .step h3{margin-bottom:7px}
+  .meeting-photo{max-height:21vh}
+  .meeting-lead{margin-bottom:12px}
+  .guide-copy p{font-size:clamp(13px,1.6vh,16px);line-height:1.66}
+  .qr{width:min(160px,26vh)}
+  .apply-button{margin-top:16px;padding:13px 24px;font-size:15px}
+  .sign{margin-top:16px;padding-top:13px}
+  .footmark{font-size:25px}
+  .footscript{font-size:17px}
 }
 
 /* ---------- without JS the page is a plain scrolling document ---------- */
@@ -354,7 +482,9 @@ html:not(.js) .panel{min-height:100vh;min-height:100svh}
     <div class="inner">
       <div class="cover-frame">
         <picture>
-          <source media="(orientation:landscape), (min-width:1024px)" srcset="assets/cover-desktop-4k.png">
+          <!-- The wide artwork only once the screen is genuinely wider than it
+               is tall; a portrait tablet gets the portrait poster. -->
+          <source media="(min-aspect-ratio:1/1)" srcset="assets/cover-desktop-4k.png">
           <img src="assets/cover-mobile.png"
                width="1587" height="2245" fetchpriority="high" decoding="async"
                alt="RE:BIBLE 시즌 3 Anointing — 순종하는 인생 가운데 기름부으시는 하나님의 섭리. 사무엘상 15:22">
@@ -502,6 +632,8 @@ html:not(.js) .panel{min-height:100vh;min-height:100svh}
 
 </div>
 
+<nav class="rail" id="rail" aria-label="섹션 이동"></nav>
+
 <script>
 (function () {
   var html = document.documentElement;
@@ -509,82 +641,163 @@ html:not(.js) .panel{min-height:100vh;min-height:100svh}
 
   var deck   = document.getElementById('deck');
   var panels = Array.prototype.slice.call(deck.children);
+  var last   = panels.length - 1;
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var rail   = document.getElementById('rail');
+
   var index  = 0;
   var locked = false;
   var accum  = 0;
+  var lastAt = 0;   /* when the last wheel tick arrived */
+  var edgeAt = 0;   /* when a long chapter first hit its edge */
 
-  /* move ---------------------------------------------------------- */
+  /* the chapter rail ------------------------------------------------ */
+  var dots = panels.map(function (panel, i) {
+    var dot = document.createElement('button');
+    dot.type = 'button';
+    dot.setAttribute('aria-label', (i + 1) + '. ' + (panel.getAttribute('aria-label') || panel.id));
+    dot.addEventListener('click', function () { go(i); });
+    rail.appendChild(dot);
+    return dot;
+  });
+
+  function paint() {
+    document.body.dataset.panel = index;
+    dots.forEach(function (dot, i) {
+      dot.classList.toggle('is-on', i === index);
+      if (i === index) dot.setAttribute('aria-current', 'true');
+      else dot.removeAttribute('aria-current');
+    });
+  }
+
+  /* move ------------------------------------------------------------ */
   function go(n) {
-    n = Math.max(0, Math.min(panels.length - 1, n));
+    n = Math.max(0, Math.min(last, n));
     if (n === index) return;
     index = n;
     deck.style.transform = 'translateY(-' + index * 100 + '%)';
-    document.body.dataset.panel = index;
     panels[index].scrollTop = 0;
     accum = 0;
-    if (!reduce) { locked = true; setTimeout(function () { locked = false; }, 840); }
+    edgeAt = 0;
+    paint();
+    if (!reduce) { locked = true; setTimeout(function () { locked = false; }, 900); }
     if (history.replaceState) history.replaceState(null, '', '#' + panels[index].id);
   }
 
-  /* a chapter taller than the screen scrolls itself first ---------- */
+  /* The pages are lazy so they never hold up the poster, but a chapter is only
+     a keypress away — once the page itself has loaded, fetch them in the
+     background rather than leaving a gap on arrival. Their boxes are sized by
+     the artwork, so an unfetched one would collapse to nothing. */
+  addEventListener('load', function () {
+    document.querySelectorAll('.document-shot').forEach(function (shot) {
+      shot.loading = 'eager';
+    });
+  });
+
+  /* A chapter taller than the screen scrolls itself first — but only a
+     chapter that is meaningfully taller. A stray pixel or two of overflow
+     used to count as "scrollable", which is why a chapter could drift down
+     on its own instead of paging over. */
+  var DUST = 4;    /* rounding, not a scroll */
+  var LONG = 40;   /* genuinely more chapter than screen */
+
+  function slack(el) { return el.scrollHeight - el.clientHeight; }
   function canScroll(el, dir) {
-    if (dir > 0) return el.scrollHeight - el.clientHeight - el.scrollTop > 1;
-    return el.scrollTop > 1;
+    if (slack(el) <= DUST) return false;
+    return dir > 0 ? slack(el) - el.scrollTop > 2 : el.scrollTop > 2;
   }
 
-  /* wheel / trackpad ---------------------------------------------- */
+  /* wheel / trackpad ------------------------------------------------- */
   addEventListener('wheel', function (e) {
     var dir = e.deltaY > 0 ? 1 : e.deltaY < 0 ? -1 : 0;
     if (!dir) return;
-    if (canScroll(panels[index], dir)) { accum = 0; return; }
+
+    var panel = panels[index];
+    if (canScroll(panel, dir)) { accum = 0; edgeAt = 0; return; }
+
     e.preventDefault();
     if (locked) return;
+
+    var now = Date.now();
+    if (now - lastAt > 220) accum = 0;   /* a new gesture starts fresh */
+    lastAt = now;
+
+    /* Reaching the foot of a long chapter is not itself a request to leave
+       it: the scroll has to be picked up again before the page turns. Only
+       a chapter the reader actually scrolled through asks for that pause —
+       turning back from the top of one should cost nothing. */
+    if (slack(panel) >= LONG && panel.scrollTop > 2) {
+      if (!edgeAt) { edgeAt = now; accum = 0; return; }
+      if (now - edgeAt < 280) return;
+    }
+
     accum += Math.abs(e.deltaY);
-    if (accum < 16) return;
-    accum = 0;
+    if (accum < 24) return;
     go(index + dir);
   }, { passive: false });
 
-  /* touch ---------------------------------------------------------- */
-  var startY = 0;
-  addEventListener('touchstart', function (e) { startY = e.touches[0].clientY; }, { passive: true });
+  /* touch ------------------------------------------------------------ */
+  var startY = 0, startAt = 0;
+  addEventListener('touchstart', function (e) {
+    startY = e.touches[0].clientY;
+    startAt = Date.now();
+  }, { passive: true });
   addEventListener('touchend', function (e) {
     var dy = startY - e.changedTouches[0].clientY;
-    if (Math.abs(dy) < 46) return;
+    var quick = Date.now() - startAt < 700;
+    if (Math.abs(dy) < (quick ? 42 : 64)) return;
     var dir = dy > 0 ? 1 : -1;
     if (canScroll(panels[index], dir) || locked) return;
     go(index + dir);
   }, { passive: true });
 
-  /* keyboard -------------------------------------------------------- */
+  /* keyboard ---------------------------------------------------------- */
   addEventListener('keydown', function (e) {
     if (e.key === 'Home') { e.preventDefault(); go(0); return; }
-    if (e.key === 'End')  { e.preventDefault(); go(panels.length - 1); return; }
+    if (e.key === 'End')  { e.preventDefault(); go(last); return; }
+    var big = e.key === 'PageDown' || e.key === 'PageUp' || e.key === ' ';
     var dir = (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') ? 1
             : (e.key === 'ArrowUp'   || e.key === 'PageUp') ? -1 : 0;
     if (!dir) return;
-    if (canScroll(panels[index], dir)) return;
     e.preventDefault();
+
+    /* A chapter is its own scroller, and the browser will only drive the one
+       holding focus — so a long chapter is scrolled here by hand, or the keys
+       would sit dead on it. */
+    var panel = panels[index];
+    if (canScroll(panel, dir)) {
+      panel.scrollTop += dir * (big ? panel.clientHeight * .85 : 90);
+      return;
+    }
     if (locked) return;
     go(index + dir);
   });
 
-  /* explicit restart button only ---------------------------------- */
+  /* the restart button on the last chapter ---------------------------- */
   document.querySelectorAll('[data-goto]').forEach(function (button) {
     button.addEventListener('click', function () { go(+button.dataset.goto); });
   });
 
-  /* open on the chapter named in the URL ---------------------------- */
+  /* A chapter that stopped overflowing after a resize should not stay
+     parked halfway down itself. */
+  var resizeTimer;
+  addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      if (slack(panels[index]) <= DUST) panels[index].scrollTop = 0;
+      edgeAt = 0;
+    }, 160);
+  });
+
+  /* open on the chapter named in the URL -------------------------------- */
   var start = panels.map(function (p) { return '#' + p.id; }).indexOf(location.hash);
+  paint();
   if (start > 0) {
     var keep = deck.style.transition;
     deck.style.transition = 'none';
     go(start);
     deck.offsetHeight;
     deck.style.transition = keep;
-  } else {
-    document.body.dataset.panel = 0;
   }
 })();
 </script>
